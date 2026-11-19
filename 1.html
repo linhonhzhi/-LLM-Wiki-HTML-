@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>工程數學：傅立葉分析直覺入門</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --accent: #38bdf8;
+            --accent-2: #818cf8;
+            --text: #f1f5f9;
+            --muted: #94a3b8;
+            --border: #334155;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: "Noto Sans TC", -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 5px;
+            background: #1e293b;
+            width: 100%;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--accent-2));
+            width: 14.28%;
+            transition: width 0.3s ease;
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .slide {
+            display: none;
+            width: 100%;
+            max-width: 960px;
+            min-height: 540px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 44px 52px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+            flex-direction: column;
+            justify-content: space-between;
+            animation: fadeIn 0.25s ease;
+        }
+
+        .slide.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .tag {
+            display: inline-block;
+            background: rgba(56, 189, 248, 0.15);
+            color: var(--accent);
+            padding: 4px 12px;
+            border-radius: 999px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 14px;
+        }
+
+        h1 {
+            font-size: 2.4rem;
+            line-height: 1.3;
+            margin-bottom: 16px;
+        }
+
+        h2 {
+            font-size: 1.85rem;
+            line-height: 1.35;
+            margin-bottom: 20px;
+            color: #fff;
+        }
+
+        p.lead {
+            font-size: 1.15rem;
+            color: var(--muted);
+            line-height: 1.7;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 12px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-top: 12px;
+        }
+
+        .box {
+            background: rgba(15, 23, 42, 0.65);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .box h3 {
+            color: var(--accent);
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+        }
+
+        .box p,
+        .box li {
+            color: #cbd5e1;
+            font-size: 0.98rem;
+            line-height: 1.6;
+        }
+
+        ul {
+            padding-left: 20px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            background: rgba(15, 23, 42, 0.65);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        th,
+        td {
+            padding: 14px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.98rem;
+        }
+
+        th {
+            background: rgba(56, 189, 248, 0.12);
+            color: var(--accent);
+        }
+
+        .source-note {
+            margin-top: 24px;
+            padding-top: 12px;
+            border-top: 1px dashed var(--border);
+            font-size: 0.82rem;
+            color: var(--muted);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        footer {
+            padding: 14px 32px;
+            background: #0b1120;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .controls button {
+            background: var(--card);
+            color: var(--text);
+            border: 1px solid var(--border);
+            padding: 8px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            margin-left: 8px;
+        }
+
+        .controls button:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .demo-btns button {
+            background: #0f172a;
+            color: var(--text);
+            border: 1px solid var(--accent);
+            padding: 6px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-right: 8px;
+            font-size: 0.9rem;
+        }
+
+        .demo-btns button.active-btn {
+            background: var(--accent);
+            color: #0f172a;
+            font-weight: 700;
+        }
+
+        canvas {
+            width: 100%;
+            height: 170px;
+            background: #0b1120;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            margin-top: 12px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="progress-bar">
+        <div class="progress-fill" id="progress"></div>
+    </div>
+
+    <main>
+        <!-- Slide 1 -->
+        <section class="slide active">
+            <div>
+                <span class="tag">工程數學直覺教學簡報</span>
+                <h1>傅立葉分析直覺入門</h1>
+                <p class="lead">不從死背積分公式開始——帶你用「聲音和弦」與「頻譜視角」，看懂複雜訊號是如何被拆解與還原的。</p>
+                <div class="grid-3" style="margin-top: 28px;">
+                    <div class="box">
+                        <h3>1. 拆解波形</h3>
+                        <p>複雜週期波＝多個簡單正弦/餘弦波的疊加。</p>
+                    </div>
+                    <div class="box">
+                        <h3>2. 切換視角</h3>
+                        <p>從「時間軸（時域）」轉到「頻率軸（頻域）」。</p>
+                    </div>
+                    <div class="box">
+                        <h3>3. 工程應用</h3>
+                        <p>揪出隱藏雜訊，完成音訊濾波與影像壓縮。</p>
+                    </div>
+                </div>
+            </div>
+            <div class="source-note">
+                <span>知識庫來源：index.md（總覽導覽）</span>
+                <span>使用鍵盤 ← / → 鍵切換投影片</span>
+            </div>
+        </section>
+
+        <!-- Slide 2 -->
+        <section class="slide">
+            <div>
+                <span class="tag">核心概念 01</span>
+                <h2>為什麼複雜波形可以拆解？</h2>
+                <div class="grid-2">
+                    <div class="box">
+                        <h3>生活比喻：聽交響樂和弦</h3>
+                        <p>麥克風錄到的是一條劇烈跳動的單一聲波曲線，但我們的耳朵能同時聽出低音大提琴與高音小提琴。</p>
+                        <p style="margin-top:10px;">傅立葉分析就是數學上的「調音台」，把混在一起的波形還原成各個頻率的純音。</p>
+                    </div>
+                    <div class="box">
+                        <h3>關鍵性質：三角函數的正交性</h3>
+                        <ul>
+                            <li>不同頻率的正弦波與餘弦波彼此<strong>互不干擾</strong>。</li>
+                            <li>就像不同孔徑的濾網，能精準萃取出特定頻率的成分大小，不會混到其他頻率。</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="source-note">
+                <span>知識庫來源：wiki/01-基本波形與疊加直覺.md</span>
+                <span>Slide 2 / 7</span>
+            </div>
+        </section>
+
+        <!-- Slide 3 -->
+        <section class="slide">
+            <div>
+                <span class="tag">運作原理 02</span>
+                <h2>傅立葉級數的三個組成角色</h2>
+                <div class="grid-3">
+                    <div class="box">
+                        <h3>直流分量 (a₀)</h3>
+                        <p>訊號在一個週期內的平均值，決定整條波形在垂直方向的<strong>上下基準線</strong>。</p>
+                    </div>
+                    <div class="box">
+                        <h3>基頻 (f₁)</h3>
+                        <p>與原訊號週期相同的最低頻率波，決定波形最基本的<strong>大輪廓</strong>。</p>
+                    </div>
+                    <div class="box">
+                        <h3>高次諧波 (2f₁, 3f₁…)</h3>
+                        <p>基頻整數倍的高頻波。疊加越多項，越能刻劃出<strong>尖角與垂直轉折</strong>。</p>
+                    </div>
+                </div>
+                <div class="box" style="margin-top: 16px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <strong>互動體驗：用正弦波疊加逼近「方波」</strong>
+                        <div class="demo-btns">
+                            <button class="active-btn" onclick="setHarmonics(1, this)">1 項 (僅基頻)</button>
+                            <button onclick="setHarmonics(3, this)">3 項諧波</button>
+                            <button onclick="setHarmonics(9, this)">9 項諧波</button>
+                        </div>
+                    </div>
+                    <canvas id="waveCanvas" width="820" height="170"></canvas>
+                </div>
+            </div>
+            <div class="source-note">
+                <span>知識庫來源：wiki/02-傅立葉級數的組成.md</span>
+                <span>Slide 3 / 7</span>
+            </div>
+        </section>
+
+        <!-- Slide 4 -->
+        <section class="slide">
+            <div>
+                <span class="tag">近似與限制 03</span>
+                <h2>有限項逼近的限制：吉布斯現象</h2>
+                <p class="lead">工程實作只能加總「有限項」諧波，當遇到不連續的垂直跳變（如方波）時會發生什麼事？</p>
+                <div class="grid-2" style="margin-top: 18px;">
+                    <div class="box">
+                        <h3>邊緣過衝（Overshoot）</h3>
+                        <p>在方波垂直跳變的角落，疊加波形會衝過頭，形成一個明顯的<strong>小尖峰</strong>（在上一頁選「9 項諧波」即可看到邊緣凸起）。</p>
+                    </div>
+                    <div class="box">
+                        <h3>無法靠增加項數消除</h3>
+                        <p>即使把諧波加到 100 項、1000 項，尖峰只會變窄並往邊緣擠，其高度依然穩定維持在跳變幅度的 <strong>約 9%</strong>。</p>
+                    </div>
+                </div>
+            </div>
+            <div class="source-note">
+                <span>知識庫來源：wiki/03-吉布斯現象與近似限制.md</span>
+                <span>Slide 4 / 7</span>
+            </div>
+        </section>
+
+        <!-- Slide 5 -->
+        <section class="slide">
+            <div>
+                <span class="tag">觀念延伸 04</span>
+                <h2>從「級數」到「傅立葉轉換」</h2>
+                <p class="lead">真實世界的講話聲或瞬間脈衝並不會無限重複，當週期 T → ∞ 時，級數就進化為傅立葉轉換。</p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>比較維度</th>
+                            <th>傅立葉級數 (Fourier Series)</th>
+                            <th>傅立葉轉換 (Fourier Transform)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>適用訊號</strong></td>
+                            <td>週期性訊號（重複循環）</td>
+                            <td>非週期性訊號（一般真實訊號）</td>
+                        </tr>
+                        <tr>
+                            <td><strong>頻譜長相</strong></td>
+                            <td>一根一根分開的「離散頻率」</td>
+                            <td>緊密相連的「連續頻譜曲線」</td>
+                        </tr>
+                        <tr>
+                            <td><strong>核心價值</strong></td>
+                            <td>用整數倍諧波重建週期波</td>
+                            <td>在時域與頻域之間自由切換視角</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="source-note">
+                <span>知識庫來源：wiki/04-從級數到傅立葉轉換.md</span>
+                <span>Slide 5 / 7</span>
+            </div>
+        </section>
+
+        <!-- Slide 6 -->
+        <section class="slide">
+            <div>
+                <span class="tag">工程實戰 05</span>
+                <h2>學這個能幹嘛？頻域濾波與應用</h2>
+                <div class="grid-3">
+                    <div class="box">
+                        <h3>1. 訊號濾波降噪</h3>
+                        <p>在時間軸上混在一起的雜訊，在頻率軸上往往位於不同頻段。用<strong>低通/高通濾波器</strong>切除雜訊頻段，再反轉換即得乾淨訊號。</p>
+                    </div>
+                    <div class="box">
+                        <h3>2. 音訊等化器 (EQ)</h3>
+                        <p>音樂播放器增強重低音或讓人聲更清晰，本質上就是在頻域中調高或調低特定頻率的振幅。</p>
+                    </div>
+                    <div class="box">
+                        <h3>3. 影像壓縮 (JPEG)</h3>
+                        <p>將影像亮度變化轉為空間頻率，捨棄人眼難以察覺的高頻細節，大幅縮減檔案大小。</p>
+                    </div>
+                </div>
+            </div>
+            <div class="source-note">
+                <span>知識庫來源：wiki/05-濾波與工程應用.md</span>
+                <span>Slide 6 / 7</span>
+            </div>
+        </section>
+
+        <!-- Slide 7 -->
+        <section class="slide">
+            <div>
+                <span class="tag">總結回顧</span>
+                <h2>三句話帶走傅立葉分析</h2>
+                <div class="box" style="margin-bottom: 14px;">
+                    <h3>1. 波形都是疊加出來的</h3>
+                    <p>複雜訊號可拆解為直流分量、基頻與高次諧波的總和（[[01]]、[[02]]）。</p>
+                </div>
+                <div class="box" style="margin-bottom: 14px;">
+                    <h3>2. 有限項近似有物理極限</h3>
+                    <p>逼近方波等不連續點時，邊緣會留下約 9% 的吉布斯過衝（[[03]]）。</p>
+                </div>
+                <div class="box">
+                    <h3>3. 換個維度解決問題</h3>
+                    <p>透過傅立葉轉換進入頻域，原本糾纏的雜訊與特徵都能一目了然地分離處理（[[04]]、[[05]]）。</p>
+                </div>
+            </div>
+            <div class="source-note">
+                <span>知識庫來源：index.md & wiki/01 ~ 05 全系列條目</span>
+                <span>Slide 7 / 7</span>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <span id="pageIndicator" style="color: var(--muted); font-size: 0.9rem;">第 1 / 7 頁</span>
+        <div class="controls">
+            <button onclick="prevSlide()">← 上一頁</button>
+            <button onclick="nextSlide()">下一頁 →</button>
+        </div>
+    </footer>
+
+    <script>
+        const slides = document.querySelectorAll('.slide');
+        const progress = document.getElementById('progress');
+        const indicator = document.getElementById('pageIndicator');
+        let current = 0;
+
+        function updateSlide() {
+            slides.forEach((s, i) => s.classList.toggle('active', i === current));
+            progress.style.width = `${((current + 1) / slides.length) * 100}%`;
+            indicator.textContent = `第 ${current + 1} / ${slides.length} 頁`;
+            if (current === 2) drawWave();
+        }
+        function nextSlide() { if (current < slides.length - 1) { current++; updateSlide(); } }
+        function prevSlide() { if (current > 0) { current--; updateSlide(); } }
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') nextSlide();
+            if (e.key === 'ArrowLeft') prevSlide();
+        });
+
+        // Interactive Fourier Square Wave Approximation
+        let harmonicsCount = 1;
+        function setHarmonics(n, btn) {
+            harmonicsCount = n;
+            document.querySelectorAll('.demo-btns button').forEach(b => b.classList.remove('active-btn'));
+            btn.classList.add('active-btn');
+            drawWave();
+        }
+        function drawWave() {
+            const canvas = document.getElementById('waveCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width, h = canvas.height;
+            ctx.clearRect(0, 0, w, h);
+
+            // Center axis
+            ctx.strokeStyle = '#334155';
+            ctx.beginPath();
+            ctx.moveTo(0, h / 2);
+            ctx.lineTo(w, h / 2);
+            ctx.stroke();
+
+            // Sum of odd harmonics
+            ctx.strokeStyle = '#38bdf8';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            for (let x = 0; x < w; x++) {
+                const theta = (x / w) * Math.PI * 4;
+                let ySum = 0;
+                for (let k = 0; k < harmonicsCount; k++) {
+                    const n = 2 * k + 1;
+                    ySum += (4 / (Math.PI * n)) * Math.sin(n * theta);
+                }
+                const py = h / 2 - ySum * 52;
+                if (x === 0) ctx.moveTo(x, py);
+                else ctx.lineTo(x, py);
+            }
+            ctx.stroke();
+        }
+        drawWave();
+    </script>
+</body>
+
+</html>
